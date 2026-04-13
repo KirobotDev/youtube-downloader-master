@@ -1,0 +1,9 @@
+node_modules/
+downloads/
+.env
+out/
+dist/
+bin/
+node-v*/
+ffmpeg*/
+*.nupkg
