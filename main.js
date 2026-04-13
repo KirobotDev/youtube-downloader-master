@@ -1,4 +1,5 @@
 const { app, BrowserWindow, shell } = require('electron');
+app.setAppUserModelId('com.ytdownloader.app');
 if (require('electron-squirrel-startup')) app.quit();
 const path = require('path');
 
@@ -11,6 +12,7 @@ function createWindow(port) {
     minWidth: 480,
     minHeight: 600,
     title: 'YT Downloader',
+    icon: path.join(__dirname, 'public', 'img', 'youtube-downloader.ico'),
     backgroundColor: '#0a0a1a',
     autoHideMenuBar: true,
     webPreferences: {

@@ -4,31 +4,43 @@ const { spawn, execFile } = require('child_process');
 const path = require('path');
 const fs = require('fs');
 const crypto = require('crypto');
+const os = require('os');
 
-const ext = process.platform === 'win32' ? '.exe' : '';
-const binNameYtdlp = 'yt-dlp' + ext;
-const binNameFfmpeg = 'ffmpeg' + ext;
+// ─── Detect if running inside a packaged Electron app ───────────────────────
+const isPackaged = __dirname.includes('app.asar');
 
-const possiblePaths = [
-  __dirname,
-  path.join(__dirname, 'bin'),
-  path.join(process.resourcesPath || '', 'bin'),
+// ─── Resolve binary paths (yt-dlp, ffmpeg) ──────────────────────────────────
+const binExt = process.platform === 'win32' ? '.exe' : '';
+const binNameYtdlp = 'yt-dlp' + binExt;
+const binNameFfmpeg = 'ffmpeg' + binExt;
+
+const possibleBinPaths = [
+  path.join(process.resourcesPath || '', 'bin'),      // packaged: resources/bin/
+  path.join(__dirname, 'bin'),                          // dev: ./bin/
   path.join(__dirname, '..', 'bin'),
-  path.join(__dirname, '..', '..', 'bin')
+  __dirname,
 ];
 
 let YTDLP_BIN = 'yt-dlp';
 let FFMPEG_BIN = 'ffmpeg';
 
-for (const p of possiblePaths) {
-  if (fs.existsSync(path.join(p, binNameYtdlp))) {
-    YTDLP_BIN = path.join(p, binNameYtdlp);
+for (const p of possibleBinPaths) {
+  const ytPath = path.join(p, binNameYtdlp);
+  console.log('[BIN SEARCH]', ytPath, fs.existsSync(ytPath));
+  if (fs.existsSync(ytPath)) {
+    YTDLP_BIN = ytPath;
     FFMPEG_BIN = path.join(p, binNameFfmpeg);
+    console.log('[BIN FOUND] yt-dlp:', YTDLP_BIN);
+    console.log('[BIN FOUND] ffmpeg:', FFMPEG_BIN);
     break;
   }
 }
 
-const os = require('os');
+// ─── Resolve static files path ──────────────────────────────────────────────
+// In packaged mode, __dirname is inside app.asar but express.static can read from it
+const publicPath = path.join(__dirname, 'public');
+
+// ─── Settings ───────────────────────────────────────────────────────────────
 const app = express();
 const PORT = process.env.PORT || 3000;
 const SETTINGS_FILE = path.join(os.homedir(), '.ytdownloader-settings.json');
@@ -43,7 +55,7 @@ if (!fs.existsSync(userSettings.downloadDir)) {
 
 app.use(cors());
 app.use(express.json());
-app.use(express.static(path.join(__dirname, 'public')));
+app.use(express.static(publicPath));
 
 // ─── Track active downloads ─────────────────────────────────────────────────
 const activeDownloads = new Map();
@@ -100,7 +112,7 @@ app.get('/api/info', (req, res) => {
           .filter((v, i, a) => a.indexOf(v) === i)
           .sort((a, b) => b - a);
 
-        const qualities = mergedQualities.length > 0 ? mergedQualities : [1080, 720, 480, 360];
+        const qualities = mergedQualities.length > 0 ? mergedQualities : [2160, 1440, 1080, 720, 480, 360];
 
         return res.json({
           type: 'video',
@@ -138,7 +150,7 @@ app.get('/api/info', (req, res) => {
         title: playlistTitle,
         count: videos.length,
         videos,
-        videoQualities: [1080, 720, 480, 360],
+        videoQualities: [2160, 1440, 1080, 720, 480, 360],
         audioQualities: [320, 256, 192, 128]
       });
 

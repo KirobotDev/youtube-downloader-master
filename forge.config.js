@@ -5,12 +5,15 @@ module.exports = {
   packagerConfig: {
     asar: true,
     extraResource: ['./bin'],
+    icon: './public/img/youtube-downloader',
   },
   rebuildConfig: {},
   makers: [
     {
       name: '@electron-forge/maker-squirrel',
-      config: {},
+      config: {
+        setupIcon: './public/img/youtube-downloader.ico',
+      },
     },
     {
       name: '@electron-forge/maker-zip',

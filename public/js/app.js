@@ -203,11 +203,11 @@ function renderQualities(gridEl, data) {
   gridEl.innerHTML = '';
 
   const qualities = state.format === 'mp4'
-    ? (data?.videoQualities || [1080, 720, 480, 360])
+    ? (data?.videoQualities || [2160, 1440, 1080, 720, 480, 360])
     : (data?.audioQualities || [320, 256, 192, 128]);
 
   const labels = state.format === 'mp4'
-    ? (q) => `${q}p`
+    ? (q) => q >= 2160 ? '4K' : q >= 1440 ? '2K' : `${q}p`
     : (q) => `${q} kbps`;
 
   state.quality = qualities[0];
