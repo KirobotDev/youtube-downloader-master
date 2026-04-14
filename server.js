@@ -60,9 +60,14 @@ app.use(express.static(publicPath));
 // ─── Track active downloads ─────────────────────────────────────────────────
 const activeDownloads = new Map();
 
-// ─── Utility: validate YouTube URL ──────────────────────────────────────────
+// ─── Utility: validate URLs ──────────────────────────────────────────
 function isValidYouTubeUrl(url) {
   const pattern = /^(https?:\/\/)?(www\.)?(youtube\.com\/(watch|shorts|playlist)|youtu\.be\/)/;
+  return pattern.test(url);
+}
+
+function isValidTikTokUrl(url) {
+  const pattern = /^(https?:\/\/)?(www\.|vt\.|vm\.)?(tiktok\.com\/)/;
   return pattern.test(url);
 }
 
@@ -74,8 +79,8 @@ function isPlaylistUrl(url) {
 app.get('/api/info', (req, res) => {
   const { url } = req.query;
 
-  if (!url || !isValidYouTubeUrl(url)) {
-    return res.status(400).json({ error: 'URL YouTube invalide.' });
+  if (!url || (!isValidYouTubeUrl(url) && !isValidTikTokUrl(url))) {
+    return res.status(400).json({ error: 'URL invalide. Veuillez entrer un lien YouTube ou TikTok valide.' });
   }
 
   const isPlaylist = isPlaylistUrl(url);
@@ -182,7 +187,7 @@ app.post('/api/download', (req, res) => {
   if (format === 'mp3') {
     const audioBitrate = quality || '320';
     args.push(
-      '-f', 'bestaudio',
+      '-f', 'bestaudio/best',
       '-x',
       '--audio-format', 'mp3',
       '--audio-quality', `${audioBitrate}K`,
